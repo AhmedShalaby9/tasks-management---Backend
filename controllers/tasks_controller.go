@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"database/sql"
 	"strconv"
 	"taskmanager/database"
 	"taskmanager/helpers"
@@ -10,93 +9,102 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// 🟢 Get all tasks
 func GetTasks(c *gin.Context) {
-	rows, err := database.DB.Query("SELECT id, title, description, done,category_id FROM tasks")
-	if err != nil {
+	var tasks []models.Task
+
+	if err := database.DB.Find(&tasks).Error; err != nil {
 		helpers.Respond(c, false, nil, err.Error())
 		return
 	}
-	defer rows.Close()
 
-	var tasksList []models.Task
-	for rows.Next() {
-		var t models.Task
-		if err := rows.Scan(&t.ID, &t.Title, &t.Description, &t.Done, &t.CategoryId); err != nil {
-			helpers.Respond(c, false, nil, err.Error())
-			return
-		}
-		tasksList = append(tasksList, t)
-	}
-
-	helpers.Respond(c, true, tasksList, "Tasks retrieved successfully")
+	helpers.Respond(c, true, tasks, "Tasks retrieved successfully")
 }
 
+// 🟢 Create a new task
 func CreateTask(c *gin.Context) {
-	var t models.Task
-	if err := c.ShouldBindJSON(&t); err != nil {
+	var task models.Task
+	if err := c.ShouldBindJSON(&task); err != nil {
 		helpers.Respond(c, false, nil, "Invalid JSON format")
 		return
 	}
 
-	res, err := database.DB.Exec("INSERT INTO tasks (title, description, done, category_id) VALUES (?, ?, ?, ?)", t.Title, t.Description, t.Done, t.CategoryId)
-	if err != nil {
+	if err := database.DB.Create(&task).Error; err != nil {
 		helpers.Respond(c, false, nil, err.Error())
 		return
 	}
-	id, _ := res.LastInsertId()
-	t.ID = int(id)
 
-	helpers.Respond(c, true, t, "Task created successfully")
+	helpers.Respond(c, true, task, "Task created successfully")
 }
 
+// 🟢 Get task by ID
 func GetTaskByID(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	var t models.Task
-	err := database.DB.QueryRow("SELECT id, title, description, done, category_id FROM tasks WHERE id = ?", id).Scan(&t.ID, &t.Title, &t.Description, &t.Done, t.CategoryId)
-	if err == sql.ErrNoRows {
+	var task models.Task
+
+	if err := database.DB.First(&task, id).Error; err != nil {
 		helpers.Respond(c, false, nil, "Task not found")
-		return
-	} else if err != nil {
-		helpers.Respond(c, false, nil, err.Error())
 		return
 	}
 
-	helpers.Respond(c, true, t, "Task retrieved successfully")
+	helpers.Respond(c, true, task, "Task retrieved successfully")
 }
 
+// 🟢 Update task
 func UpdateTask(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	var t models.Task
-	if err := c.ShouldBindJSON(&t); err != nil {
+	var task models.Task
+
+	if err := database.DB.First(&task, id).Error; err != nil {
+		helpers.Respond(c, false, nil, "Task not found")
+		return
+	}
+
+	var updated models.Task
+	if err := c.ShouldBindJSON(&updated); err != nil {
 		helpers.Respond(c, false, nil, "Invalid JSON")
 		return
 	}
 
-	_, err := database.DB.Exec("UPDATE tasks SET title=?, description=?, done=? WHERE id=?", t.Title, t.Description, t.Done, id)
-	if err != nil {
+	task.Title = updated.Title
+	task.Description = updated.Description
+	task.Done = updated.Done
+	task.CategoryId = updated.CategoryId
+
+	if err := database.DB.Save(&task).Error; err != nil {
 		helpers.Respond(c, false, nil, err.Error())
 		return
 	}
 
-	helpers.Respond(c, true, t, "Task updated successfully")
+	helpers.Respond(c, true, task, "Task updated successfully")
 }
 
+// 🟢 Delete task
 func DeleteTask(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	_, err := database.DB.Exec("DELETE FROM tasks WHERE id=?", id)
-	if err != nil {
+	if err := database.DB.Delete(&models.Task{}, id).Error; err != nil {
 		helpers.Respond(c, false, nil, err.Error())
 		return
 	}
+
 	helpers.Respond(c, true, nil, "Task deleted successfully")
 }
 
+// 🟢 Mark task as complete
 func CompleteTask(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	_, err := database.DB.Exec("UPDATE tasks SET done=true WHERE id=?", id)
-	if err != nil {
+	var task models.Task
+
+	if err := database.DB.First(&task, id).Error; err != nil {
+		helpers.Respond(c, false, nil, "Task not found")
+		return
+	}
+
+	task.Done = true
+	if err := database.DB.Save(&task).Error; err != nil {
 		helpers.Respond(c, false, nil, err.Error())
 		return
 	}
-	helpers.Respond(c, true, gin.H{"id": id, "done": true}, "Task marked as complete")
+
+	helpers.Respond(c, true, task, "Task marked as complete")
 }

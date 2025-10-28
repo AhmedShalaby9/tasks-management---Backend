@@ -9,22 +9,12 @@ import (
 )
 
 func GetCategories(c *gin.Context) {
-	rows, err := database.DB.Query("SELECT id, title FROM categories")
-	if err != nil {
+	var categories []models.Category
+
+	if err := database.DB.Find(&categories).Error; err != nil {
 		helpers.Respond(c, false, nil, err.Error())
 		return
 	}
-	defer rows.Close()
 
-	var categoriesList []models.Category
-	for rows.Next() {
-		var t models.Category
-		if err := rows.Scan(&t.ID, &t.Title); err != nil {
-			helpers.Respond(c, false, nil, err.Error())
-			return
-		}
-		categoriesList = append(categoriesList, t)
-	}
-
-	helpers.Respond(c, true, categoriesList, "Categories retrieved successfully")
+	helpers.Respond(c, true, categories, "Categories retrieved successfully")
 }
