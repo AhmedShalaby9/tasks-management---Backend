@@ -9,19 +9,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// 🟢 Get all tasks
 func GetTasks(c *gin.Context) {
 	var tasks []models.Task
+	var res = database.DB.Find(&tasks)
 
-	if err := database.DB.Find(&tasks).Error; err != nil {
-		helpers.Respond(c, false, nil, err.Error())
+	if res.Error != nil {
+		helpers.Respond(c, false, nil, res.Error.Error())
 		return
 	}
-
 	helpers.Respond(c, true, tasks, "Tasks retrieved successfully")
+
 }
 
-// 🟢 Create a new task
 func CreateTask(c *gin.Context) {
 	var task models.Task
 	if err := c.ShouldBindJSON(&task); err != nil {
