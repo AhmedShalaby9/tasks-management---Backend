@@ -11,7 +11,7 @@ import (
 
 func GetTasks(c *gin.Context) {
 	var tasks []models.Task
-	var res = database.DB.Find(&tasks)
+	var res = database.DB.Preload("Category").Find(&tasks)
 
 	if res.Error != nil {
 		helpers.Respond(c, false, nil, res.Error.Error())
@@ -24,7 +24,7 @@ func GetTasks(c *gin.Context) {
 func CreateTask(c *gin.Context) {
 	var task models.Task
 	if err := c.ShouldBindJSON(&task); err != nil {
-		helpers.Respond(c, false, nil, "Invalid JSON format")
+		helpers.Respond(c, false, nil, err.Error())
 		return
 	}
 
@@ -68,7 +68,7 @@ func UpdateTask(c *gin.Context) {
 	task.Title = updated.Title
 	task.Description = updated.Description
 	task.Done = updated.Done
-	task.CategoryId = updated.CategoryId
+	task.Category = updated.Category
 
 	if err := database.DB.Save(&task).Error; err != nil {
 		helpers.Respond(c, false, nil, err.Error())

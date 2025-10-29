@@ -29,6 +29,11 @@ func CreateCategory(c *gin.Context) {
 		return
 	}
 
+	if category.Title == "" {
+		helpers.Respond(c, false, nil, "Category title is required")
+		return
+	}
+
 	res := database.DB.Create(&category)
 	if res.Error != nil {
 		helpers.Respond(c, false, nil, res.Error.Error())

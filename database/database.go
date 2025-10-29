@@ -20,7 +20,6 @@ func Connect() {
 	if err != nil {
 		log.Fatal("❌ Database ping error:", err)
 	}
-
 	fmt.Println("✅ Connected to MySQL successfully!")
 	DB = db
 }
