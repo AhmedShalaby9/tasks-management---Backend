@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 
+	// models "taskmanager/model"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -11,15 +13,23 @@ import (
 var DB *gorm.DB
 
 func Connect() {
-	dsn := "root:2010961523@tcp(127.0.0.1:3306)/taskmanager_db?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatal("❌ Database connection error:", err)
-	}
+	host := "ballast.proxy.rlwy.net"
+	port := "54178"
+	user := "root"
+	password := "NgjcxUaphKqtlbmXkxfrEqswRVUSioIN"
+	dbname := "railway"
 
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		user, password, host, port, dbname)
+
+	var err error
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal("❌ Database ping error:", err)
+		log.Fatalf("❌ Database connection error: %v", err)
 	}
-	fmt.Println("✅ Connected to MySQL successfully!")
-	DB = db
+	// err = DB.AutoMigrate(
+	// 	&models.Category{},
+	// 	&models.Task{},
+	// )
+	log.Println("✅ Connected to Railway MySQL successfully")
 }

@@ -30,6 +30,7 @@ func CreateCategory(c *gin.Context) {
 	}
 
 	if category.Title == "" {
+
 		helpers.Respond(c, false, nil, "Category title is required")
 		return
 	}
