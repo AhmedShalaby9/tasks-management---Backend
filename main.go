@@ -14,6 +14,7 @@ func main() {
 	router := gin.Default()
 	routes.RegisterTaskRoutes(router)
 	routes.RegisterCategoriesRoutes(router)
+	routes.RegisterAuthRoutes(router)
 
 	fmt.Println("🚀 Server running on http://localhost:8080")
 	router.Run(":8080")
